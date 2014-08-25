@@ -4,7 +4,7 @@ uniform vec2 resolution;
 uniform sampler2D texture;
 uniform sampler2D t_audio;
 
-uniform vec4 spheres[25];
+uniform vec3 spheres[25];
 uniform vec3 sphereCols[25];
 
 varying vec2 vUv;
@@ -53,26 +53,26 @@ float doModel( vec3 p , vec3 pos ){
 
 
 
-float iSphere( in vec3 ro, in vec3 rd, in vec4 sph ){
+float iSphere( in vec3 ro, in vec3 rd, in vec3 sph , in float id ){
 
-  float r = length(texture2D( t_audio, vec2( abs(sph.x) , 0. ))); 
+  float r = length(texture2D( t_audio, vec2( id , 0. ))); 
   vec3 oc = ro - sph.xyz;
   float b = dot( oc, rd );
-  float c = dot( oc, oc ) - sph.w*sph.w * r * r * r * r; //(abs(cos( time ))+1.);
+  float c = dot( oc, oc ) - .02 * (r*r*r*r*.5+.5); //(abs(cos( time ))+1.);
   float h = b*b - c;
-  if( h<0.0 ) return -1.0;
+  if( h<0.0 ) return - 1.0;
   
   return -b - sqrt( h );
 
 }
 
-float sSphere( in vec3 ro, in vec3 rd, in vec4 sph ){
+float sSphere( in vec3 ro, in vec3 rd, in vec3 sph , in float id ){
  
-  float r = length(texture2D( t_audio, vec2( abs(sph.x) , 0. ))); 
+  float r = length(texture2D( t_audio, vec2( id , 0. ))); 
   
   vec3 oc = ro - sph.xyz;
   float b = dot( oc, rd );
-  float c = dot( oc, oc ) - sph.w*sph.w * r*r*r*r;
+  float c = dot( oc, oc ) - .02 * (r*r*r*r*.5+.5);
 
   return step( min( -b, min( c, b*b - c ) ), 0.0 );
 
@@ -220,11 +220,12 @@ void main( void ){
   vec3 sur = vec3(1.0);
 
   float hit = 0.;
+  float id = 0.;
 
   vec3 sCol = vec3( 0. );
   for( int i = 0; i < 25; i++ ){
 
-    float h = iSphere( ro , rd , spheres[i]  );
+    float h = iSphere( ro , rd , spheres[i] , float(i) / 25. );
 
     if(  h>0.0 && h<tmin ){
       tmin = h;
@@ -232,8 +233,8 @@ void main( void ){
       pos = ro + h*rd;
       nor = normalize(pos-spheres[i].xyz); 
       sCol = sphereCols[i];
+      id = float( i ) / 25.;
       //occ = oSphere( pos, nor, sph2 ) * oSphere( pos, nor, sph3 );
-      sur = vec3( 1. , 1. , cos( float( i ) ) );
     }
 
   }
@@ -251,11 +252,11 @@ void main( void ){
 
     //vec2 rand = hash2( time * vUv.x + vUv.y );
 
-    //off = length(hash2( time * vUv.x + vUv.y )) ;
-    off = length(hash2( vUv.x + vUv.y )) ;
+    off = length(hash2( time * vUv.x + vUv.y )) ;
+    //off = length(hash2( vUv.x + vUv.y )) ;
 
-   // off = 0.;
-    for( int i = 0; i < 10; i++ ){
+    //off = 0.;
+    for( int i = 0; i < 5; i++ ){
 
       vec2  aa = hash2( off +  float(i)*203.1 );
       float ra = sqrt(aa.y);
@@ -268,7 +269,7 @@ void main( void ){
 
       for( int j = 0; j < 25; j++ ){
 
-        float t = sSphere( pos , rr , spheres[j] );
+        float t = sSphere( pos , rr , spheres[j] , float(j) / 25.  );
         res = min( t , res );
 
         occCol += sphereCols[j] * ( 1. - t );
@@ -281,9 +282,9 @@ void main( void ){
 
     }
 
-    occ /= 10.; //occ * occ;
+    occ /= 5.; //occ * occ;
 
-    occCol /= 10.;
+    occCol /= 5.;
     // occ /= 5.;
     //occ = .0;
 
@@ -293,6 +294,9 @@ void main( void ){
 
   vec3 col =vec3(1.);// texture2D( t_audio , vec2( vUv.x , 0. ) ).xyz;//vec3(1.0);
 
+  vec3 aC = texture2D( t_audio , vec2( abs(cos(vUv.y* 1000. * time)) , 0. )).xyz;
+  
+  col =  vec3( 0. );// * ( 1. -(length(aC)* .4 + .3))   ;
 
   if( tmin<100.0 ){
 
@@ -304,6 +308,7 @@ void main( void ){
   
     float l =  dot( t , vec3( 0., 0., 1.));
 
+    //vec3 aC = texture2D( t_audio , vec2( abs(t.x) , 0. )).xyz;
     /*if( l < .2 ){
 
       col = vec3( 1. , 1. , 1. );
@@ -324,23 +329,40 @@ void main( void ){
       float len = length( s );
       float l =  dot( t , normalize(s) );
 
-      vec3 a = texture2D( t_audio , vec2( l , 0. ) ).xyz;
+      //vec3 a =  texture2D( t_audio , vec2( l , 0. ) ).xyz;
 
-      //col -= a * (.004 / (len*len));
-    
 
     }
+
+    //col -= aC* .1; //* length(hash2( time * vUv.x + time * vUv.y )) * .1 + .9;
+    //col -= vec3( .1 , .6 , .1 ) * length(hash2( time * vUv.x + time * vUv.y )) ;
 
     //col = ( l1 + l2 + a) *  occ;
 
     //col = sCol * occ;
 
-    col -= occCol;
-    col -= occCol;
+    //col -=
+   // col +=  occCol;
+
+    float rand =  length(hash2( time * vUv.x + time * vUv.y )) * .04;
+    //vec3 aD = texture2D( t_audio , vec2( (1. - (tmin / 10.)) , 0.)  ).xyz;
+    vec3 aD = texture2D( t_audio , vec2( id +  (tmin - 2. )/ 10., 0.)  ).xyz;
+    col += aD * aD * aD * (1. - rand*5.) ; //* (1. - rand*5.);// * (1.-length(hash2( time * vUv.x + time * vUv.y )) * .3); // / 10.;
+   // col -= occCol;
+
+    col *= .2 +  (.0 + ( 1. - occ) * ( 1. - occ)*( 1. - occ)*( 1. - occ)* 2.) ;
+
+    //col +=  (1. - occ) * texture2D( t_audio , vec2( 1. - occ  , 0. ) ).xyz;
+
+    //col
+    //col *= occ;
+    //col -= occCol;
     //col += a;
     //col += l1 * occ;
     // col = vec3( .0 ) * occ + ( l1 + l2 + a) * ( 1. - occ );
     
+  }else{
+    col = vec3( .0 );
   }
   //-----------------------------------------------------
   // postprocessing

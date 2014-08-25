@@ -54,7 +54,8 @@
 
             var controller , frame;
 
-            var spheres = { type:"v4v" , value:[] }
+            var velocities = { type:"v3v" , value:[] }
+            var spheres = { type:"v3v" , value:[] }
             var sphereCols = { type:"v3v" , value:[] }
             var time = { type:"f" , value:0}
             var uniforms;
@@ -122,11 +123,11 @@
                 ]
                 for( var i = 0; i < 25; i++ ){
 
-                  var s = new THREE.Vector4(
+                  var s = new THREE.Vector3(
                     (Math.random() - .5 ) * 3,
                     (Math.random() - .5 ) * 3,
-                    (Math.random() - .5 ) * 3,
-                    Math.random()
+                    (Math.random() - .5 ) * 3
+                   // Math.random()
                   );
 
                   spheres.value.push( s );
@@ -192,6 +193,17 @@
               requestAnimationFrame( animate );
 
               audioController.update();
+
+              for( var i = 0; i < velocities.value.length; i++ ){
+
+               // var p = spher
+
+              }
+
+              for( var i = 0; i < velocities.value.length; i++ ){
+
+
+              }
 
               if( frame.hands[0] ){
 
