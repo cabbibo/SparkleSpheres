@@ -114,6 +114,12 @@
                 };
 
 
+                var cols = [
+
+                  new THREE.Vector3( 1. , .8 , .3),
+                  new THREE.Vector3( .6 , .4 , 1.),
+                  new THREE.Vector3( .1 , 1. , .6)
+                ]
                 for( var i = 0; i < 25; i++ ){
 
                   var s = new THREE.Vector4(
@@ -125,12 +131,8 @@
 
                   spheres.value.push( s );
 
-                  var c = new THREE.Vector3(
-                    Math.random() * .5,
-                    Math.random()* .5,
-                    Math.random() * .5
-                  );
 
+                  var c = cols[ Math.floor( Math.random() * cols.length)];
                   sphereCols.value.push( c );
 
                 }

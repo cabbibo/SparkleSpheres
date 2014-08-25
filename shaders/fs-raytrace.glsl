@@ -54,10 +54,11 @@ float doModel( vec3 p , vec3 pos ){
 
 
 float iSphere( in vec3 ro, in vec3 rd, in vec4 sph ){
- 
+
+  float r = length(texture2D( t_audio, vec2( abs(sph.x) , 0. ))); 
   vec3 oc = ro - sph.xyz;
   float b = dot( oc, rd );
-  float c = dot( oc, oc ) - sph.w*sph.w;
+  float c = dot( oc, oc ) - sph.w*sph.w * r * r * r * r; //(abs(cos( time ))+1.);
   float h = b*b - c;
   if( h<0.0 ) return -1.0;
   
@@ -66,10 +67,12 @@ float iSphere( in vec3 ro, in vec3 rd, in vec4 sph ){
 }
 
 float sSphere( in vec3 ro, in vec3 rd, in vec4 sph ){
+ 
+  float r = length(texture2D( t_audio, vec2( abs(sph.x) , 0. ))); 
   
   vec3 oc = ro - sph.xyz;
   float b = dot( oc, rd );
-  float c = dot( oc, oc ) - sph.w*sph.w;
+  float c = dot( oc, oc ) - sph.w*sph.w * r*r*r*r;
 
   return step( min( -b, min( c, b*b - c ) ), 0.0 );
 
