@@ -64,7 +64,11 @@
             var loaded = 0;
             var neededToLoad = 2;
 
+            var attractionPoint = new THREE.Vector3();
+
             var gui = new dat.GUI();
+
+            var tV3 = new THREE.Vector3();
 
 
             var U = {
@@ -72,9 +76,16 @@
 
               baseAmount:{type:"f",value:.2},
               aoAmount:{type:"f",value:4.},
-              radiusBase:{type:"f",value:.01},
+              radiusBase:{type:"f",value:.005},
               radiusPower:{type:"f",value:3.},
-              radiusMultiplier:{type:"f",value:.7}
+              radiusMultiplier:{type:"f",value:.7},
+              attactionPoint:{ type:"v3" , value:attractionPoint },
+              springDistance:{type:"f" , value:.001 },
+              springPower:{type:"f" , value:.0001 },
+              attractionPower:{type:"f" , value:1 },
+              attractionDistance:{type:"f" , value:.3 },
+              dampening:{type:"f" , value:1}
+
 
             }
             gui.add( U.baseAmount , 'value' , 0 , 1 ).name( 'Base Amount' );
@@ -82,6 +93,14 @@
             gui.add( U.radiusBase , 'value' , 0 , .1 ).name( 'Radius Base' );
             gui.add( U.radiusMultiplier , 'value' , 0 , 4. ).name( 'Radius Multiplier' );
             gui.add( U.radiusPower , 'value' , 0 , 5 ).name( 'Radius Power' );
+            
+            
+            gui.add( U.springPower , 'value' , 0 , .001 ).name( 'Spring Power' );
+            gui.add( U.springDistance , 'value' , 0 , 1 ).name( 'Spring Distance' );
+            gui.add( U.dampening, 'value' , .8 , 1 ).name( 'Dampening' );
+            
+
+
 
             var audioController = new AudioController();
             var userAudio = new UserAudio( audioController );
@@ -158,6 +177,17 @@
 
                   spheres.value.push( s );
 
+                  var v = new THREE.Vector3(
+
+                    (Math.random() - .5 ) * .03,
+                    (Math.random() - .5 ) * .03,
+                    (Math.random() - .5 ) * .03
+
+                  );
+
+                  velocities.value.push( v );
+
+
 
                   var c = cols[ Math.floor( Math.random() * cols.length)];
                   sphereCols.value.push( c );
@@ -222,12 +252,51 @@
 
               for( var i = 0; i < velocities.value.length; i++ ){
 
-               // var p = spher
+                var p = spheres.value[i];
+                var v = velocities.value[i];
+
+
+
+                tV3.copy( attractionPoint );
+                tV3.sub( p );
+
+                var l = tV3.length();
+
+                l -= U.attractionDistance.value;
+
+                tV3.normalize().multiplyScalar( l * U.attractionPower.value );
+                v.add( tV3 );
+
+
+                for( var j = 0; j < velocities.value.length; j++ ){
+
+                  tV3.copy( spheres.value[j] );
+                  tV3.sub( p );
+
+
+                  var l = tV3.length();
+
+                  l -= U.springDistance.value;
+
+                  tV3.normalize().multiplyScalar( l * U.springPower.value );
+                  v.add( tV3 );
+                  
+
+                }
+
+
 
               }
 
+
               for( var i = 0; i < velocities.value.length; i++ ){
 
+
+                var v = velocities.value[i];
+                var p = spheres.value[i];
+
+                p.add( v );
+                v.multiplyScalar( U.dampening.value );
 
               }
 
@@ -261,8 +330,6 @@
                       spheres.value[ index ].y = nP[1]*2;
                       spheres.value[ index ].z = (nP[2]*2)-1;
 
-                      spheres.value[index].w = .1;
-
                     }
 
 
@@ -274,7 +341,7 @@
               }else{
 
           
-                for( var i = 0; i < spheres.value.length; i++ ){
+               /* for( var i = 0; i < spheres.value.length; i++ ){
 
                   var l = spheres.length;
                   var t = time.value;
@@ -294,10 +361,8 @@
                   spheres.value[i].y = y*.5;
                   spheres.value[i].z = z*.5;
 
-                  spheres.value[i].w = .1;
 
-
-                }
+                }*/
 
               }
 
