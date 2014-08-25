@@ -40,6 +40,7 @@
 		<script src="stats.min.js"></script>
 		<script src="leap.min.js"></script>
 		<script src="jquery.min.js"></script>
+        <script src="dat.gui.min.js"></script>
 		<script src="underscore.js"></script>
 		<script src="ShaderLoader.js"></script>
 		<script src="AudioController.js"></script>
@@ -62,7 +63,26 @@
 
             var loaded = 0;
             var neededToLoad = 2;
-            
+
+            var gui = new dat.GUI();
+
+
+            var U = {
+
+
+              baseAmount:{type:"f",value:.2},
+              aoAmount:{type:"f",value:4.},
+              radiusBase:{type:"f",value:.01},
+              radiusPower:{type:"f",value:3.},
+              radiusMultiplier:{type:"f",value:.7}
+
+            }
+            gui.add( U.baseAmount , 'value' , 0 , 1 ).name( 'Base Amount' );
+            gui.add( U.aoAmount , 'value' , 0 , 5 ).name( 'AO Amount' );
+            gui.add( U.radiusBase , 'value' , 0 , .1 ).name( 'Radius Base' );
+            gui.add( U.radiusMultiplier , 'value' , 0 , 4. ).name( 'Radius Multiplier' );
+            gui.add( U.radiusPower , 'value' , 0 , 5 ).name( 'Radius Power' );
+
             var audioController = new AudioController();
             var userAudio = new UserAudio( audioController );
 
@@ -104,6 +124,7 @@
                 texture.wrapS = THREE.RepeatWrapping;
                 texture.wrapT = THREE.RepeatWrapping;
 
+
                 uniforms = {
                   time: time,
                   resolution: { type: "v2", value: new THREE.Vector2() },
@@ -111,7 +132,12 @@
                   spheres:spheres,
                   sphereCols:sphereCols,
                   texture: { type:"t" , value: texture },
-                  t_audio: { type:"t" , value: audioController.texture}
+                  t_audio: { type:"t" , value: audioController.texture},
+                  baseAmount: U.baseAmount,
+                  aoAmount: U.aoAmount,
+                  radiusPower: U.radiusPower,
+                  radiusMultiplier: U.radiusMultiplier,
+                  radiusBase: U.radiusBase,
                 };
 
 

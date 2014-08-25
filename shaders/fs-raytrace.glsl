@@ -4,6 +4,13 @@ uniform vec2 resolution;
 uniform sampler2D texture;
 uniform sampler2D t_audio;
 
+
+uniform float baseAmount;
+uniform float aoAmount;
+uniform float radiusPower;
+uniform float radiusMultiplier;
+uniform float radiusBase;
+
 uniform vec3 spheres[25];
 uniform vec3 sphereCols[25];
 
@@ -58,7 +65,7 @@ float iSphere( in vec3 ro, in vec3 rd, in vec3 sph , in float id ){
   float r = length(texture2D( t_audio, vec2( id , 0. ))); 
   vec3 oc = ro - sph.xyz;
   float b = dot( oc, rd );
-  float c = dot( oc, oc ) - .02 * (r*r*r*r*.5+.5); //(abs(cos( time ))+1.);
+  float c = dot( oc, oc ) - radiusBase * (pow( r , radiusPower )* radiusMultiplier +1.); //(abs(cos( time ))+1.);
   float h = b*b - c;
   if( h<0.0 ) return - 1.0;
   
@@ -72,7 +79,7 @@ float sSphere( in vec3 ro, in vec3 rd, in vec3 sph , in float id ){
   
   vec3 oc = ro - sph.xyz;
   float b = dot( oc, rd );
-  float c = dot( oc, oc ) - .02 * (r*r*r*r*.5+.5);
+  float c = dot( oc, oc )  - radiusBase * (pow( r , radiusPower )* radiusMultiplier +1.);
 
   return step( min( -b, min( c, b*b - c ) ), 0.0 );
 
@@ -350,7 +357,7 @@ void main( void ){
     col += aD * aD * aD * (1. - rand*5.) ; //* (1. - rand*5.);// * (1.-length(hash2( time * vUv.x + time * vUv.y )) * .3); // / 10.;
    // col -= occCol;
 
-    col *= .2 +  (.0 + ( 1. - occ) * ( 1. - occ)*( 1. - occ)*( 1. - occ)* 2.) ;
+    col *= baseAmount +  (.0 + ( 1. - occ) * ( 1. - occ)*( 1. - occ)*( 1. - occ)* aoAmount ) ;
 
     //col +=  (1. - occ) * texture2D( t_audio , vec2( 1. - occ  , 0. ) ).xyz;
 
