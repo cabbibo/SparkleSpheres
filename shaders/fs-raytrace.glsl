@@ -27,7 +27,7 @@ vec2 hash2( float n ){
 //------------------------------------------------------------------------
 void doCamera( out vec3 camPos, out vec3 camTar, in float time, in float mouseX ){
   float an = 0.3 + 10.0*mouseX;
-  camPos = vec3(3.5*sin(an),1.0,3.5*cos(an));
+  camPos = vec3( 0. , 0. , 3. );//vec3(3.5*sin(an),1.0,3.5*cos(an));
   camTar = vec3(0.0,0.0,0.0);
 }
 
@@ -248,11 +248,11 @@ void main( void ){
 
     //vec2 rand = hash2( time * vUv.x + vUv.y );
 
-    off = length(hash2( time * vUv.x + vUv.y )) ;
-    //off = length(hash2( vUv.x + vUv.y )) ;
+    //off = length(hash2( time * vUv.x + vUv.y )) ;
+    off = length(hash2( vUv.x + vUv.y )) ;
 
-    //off = 0.;
-    for( int i = 0; i < 3; i++ ){
+   // off = 0.;
+    for( int i = 0; i < 10; i++ ){
 
       vec2  aa = hash2( off +  float(i)*203.1 );
       float ra = sqrt(aa.y);
@@ -278,9 +278,9 @@ void main( void ){
 
     }
 
-    occ /= 3.; //occ * occ;
+    occ /= 10.; //occ * occ;
 
-    occCol /= 3.;
+    occCol /= 10.;
     // occ /= 5.;
     //occ = .0;
 
@@ -288,7 +288,8 @@ void main( void ){
 
 
 
-  vec3 col =vec3(0.);// texture2D( t_audio , vec2( vUv.x , 0. ) ).xyz;//vec3(1.0);
+  vec3 col =vec3(1.);// texture2D( t_audio , vec2( vUv.x , 0. ) ).xyz;//vec3(1.0);
+
 
   if( tmin<100.0 ){
 
@@ -298,14 +299,42 @@ void main( void ){
     vec3 l1 = dot( t , vec3( 1., 0., 0.))* sCol;
     vec3 l2 = dot( t , vec3( -1., 0., 0.))* vec3( .4 , 1. , .6 );
   
-    float l =  dot( t , vec3( -1., 0., 0.));
-    vec3 a = texture2D( t_audio , vec2( l , 0. ) ).xyz;
+    float l =  dot( t , vec3( 0., 0., 1.));
+
+    /*if( l < .2 ){
+
+      col = vec3( 1. , 1. , 1. );
+
+    }else if( l >= .2 && l < .6 ){
+      col = vec3(.8 , .9 , 1. );
+    }else if( l >= .6 && l < .8 ){
+      col = vec3(.6 , .7 , 1. );
+    }else if( l >= .8 ){
+      col = vec3(.6 , .4 , 1. );
+    }*/
+
+    for( int i = 0; i < 25; i++ ){
+
+      vec3 s = spheres[i].xyz;
+       
+      s -= pos;
+      float len = length( s );
+      float l =  dot( t , normalize(s) );
+
+      vec3 a = texture2D( t_audio , vec2( l , 0. ) ).xyz;
+
+      //col -= a * (.004 / (len*len));
+    
+
+    }
+
     //col = ( l1 + l2 + a) *  occ;
 
     //col = sCol * occ;
 
-    col += occCol;
-    col += a;
+    col -= occCol;
+    col -= occCol;
+    //col += a;
     //col += l1 * occ;
     // col = vec3( .0 ) * occ + ( l1 + l2 + a) * ( 1. - occ );
     
