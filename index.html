@@ -356,7 +356,15 @@
               }else{
 
 
-                attractionPoint.set( 0 , 0 , 0 );
+               var t = time.value;
+
+
+              var z = Math.cos( (t * Math.sin( 4+.33)) * .2  );
+              var y = Math.cos( (t * Math.sin( 4*3+4.33)) * .2  );
+              var x = Math.sin( (t * Math.cos( 4+.33)) * .4  );
+
+              attractionPoint.set( x , y , z );
+
                /* for( var i = 0; i < spheres.value.length; i++ ){
 
                   var l = spheres.length;
