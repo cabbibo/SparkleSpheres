@@ -2,17 +2,19 @@
 <!DOCTYPE html>
 <html lang="en">
 	<head>
-		<title>three.js webgl - shader [Monjori]</title>
+		<title>Raytracer</title>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-		<style>
+        <style>
+          @font-face {
+      font-family: "GeoSans";
+      src: url("GeosansLight.ttf");
+    }
+    
+      html{ color:#fff; background:#000; font-family:"GeoSans"; overflow:hidden }
 			body {
 				color: #ffffff;
-				font-family:Monospace;
-				font-size:13px;
-				text-align:center;
-				font-weight: bold;
-
+				
 				background-color: #ffffff;
 				margin: 0px;
 				overflow: hidden;
@@ -24,15 +26,61 @@
 				padding: 5px;
 			}
 
-			a {
 
-				color: #ffffff;
-			}
+            #description{
 
-			#oldie a { color:#da0 }
+              position:absolute;
+              left:0px;
+              width:400px;
+              padding:10px;
+              font-size:20px;
+
+            }
+
+            a{
+              color: #fff;
+              z-index: 999;
+              //bottom:5px;
+              //right:10px;
+              text-decoration:none;
+              //underline:none;
+              opacity:.5;
+              font-size: 20px;
+            }
+
+            a:hover{
+
+              text-decoration:underline;
+              opacity:1;
+
+            }
+
+            #gui{
+              position:absolute;
+              right:0px;
+              top:0px;
+            }
 		</style>
 	</head>
 	<body>
+
+      <div id="description">
+
+        Raytracing example using <a href="https://www.shadertoy.com/view/ldX3Ws" target="_blank"> This shader by IQ </a>.<br/><br/>
+        Because it is a fragment shader, the size of your window will greatly affect the speed of the program. If it is too slow for your liking, drag to resize. The faster the frame rate is ( bottom right corner ), the more you will be able to see the audio reactivity.<br/><br/>
+        If you have a <a href="https://www.leapmotion.com/" target="_blank" >Leap Motion Controller</a>, hold space while moving your hand to play with parameters. Release space to set them. If you get too lost, dont feel scared to press 'reset'.<br/><br/>
+
+        Press 'x' to toggle info.
+        <br/><br/>
+
+        <a href="https://soundcloud.com/pamparecords/dave-dk-woolloomooloo-1?in=pamparecords/sets/pampa020-ricosh-i-dave-dk" target="_blank">
+          Dave DK - Woolloomooloo
+        </a>
+
+      </div>
+
+
+        <div id="gui"></div>
 
 		<div id="container"></div>
 
@@ -46,6 +94,7 @@
 		<script src="AudioController.js"></script>
 		<script src="AudioTexture.js"></script>
 		<script src="UserAudio.js"></script>
+		<script src="Stream.js"></script>
 
   		<script>
 
@@ -62,13 +111,18 @@
             var uniforms;
 
             var loaded = 0;
-            var neededToLoad = 2;
+            var neededToLoad = 1;
 
             var attractionPoint = new THREE.Vector3();
 
-            var gui = new dat.GUI();
+            var gui = new dat.GUI({ autoPlace: false });
+
+var customContainer = document.getElementById('gui');
+customContainer.appendChild(gui.domElement);
 
             var tV3 = new THREE.Vector3();
+
+            var settingParams = false;
 
 
             var U = {
@@ -84,33 +138,56 @@
               springPower:{type:"f" , value:.0001 },
               attractionPower:{type:"f" , value:.001 },
               attractionDistance:{type:"f" , value:.8 },
-              dampening:{type:"f" , value:.95}
+              dampening:{type:"f" , value:.95},
 
+              reset:function(){
+
+                for( var i in startingValues ){
+
+                  U[i].value = startingValues[i]
+
+                }
+
+
+              }
+              
 
             }
-            gui.add( U.baseAmount , 'value' , 0 , 1 ).name( 'Base Amount' );
-            gui.add( U.aoAmount , 'value' , 0 , 5 ).name( 'AO Amount' );
-            gui.add( U.radiusBase , 'value' , 0 , .1 ).name( 'Radius Base' );
-            gui.add( U.radiusMultiplier , 'value' , 0 , 4. ).name( 'Radius Multiplier' );
-            gui.add( U.radiusPower , 'value' , 0 , 5 ).name( 'Radius Power' );
-            
-            
-            gui.add( U.springPower , 'value' , 0 , .001 ).name( 'Spring Power' );
-            gui.add( U.springDistance , 'value' , 0 , 2 ).name( 'Spring Distance' );
-            gui.add( U.attractionDistance , 'value' , 0 , 3 ).name( 'Attraction Distance' );
-            gui.add( U.attractionPower , 'value' , .005 , .1 ).name( 'Attraction Power' );
-            gui.add( U.dampening, 'value' , .8 , 1 ).name( 'Dampening' );
-            
 
+
+            var startingValues = {}
+            for( var i in U ){
+
+              startingValues[i] = U[i].value;
+
+            }
+
+            gui.add( U.baseAmount , 'value' , 0 , 1 ).name( 'Base Amount' ).listen();
+            gui.add( U.aoAmount , 'value' , 0 , 5 ).name( 'AO Amount' ).listen();
+            gui.add( U.radiusBase , 'value' , 0 , .1 ).name( 'Radius Base' ).listen();
+            gui.add( U.radiusMultiplier , 'value' , 0 , 4. ).name( 'Radius Multiplier' ).listen();
+            gui.add( U.radiusPower , 'value' , 0 , 5 ).name( 'Radius Power' ).listen();
+            
+            
+            gui.add( U.springPower , 'value' , 0 , .001 ).name( 'Spring Power' ).listen();
+            gui.add( U.springDistance , 'value' , 0 , 2 ).name( 'Spring Distance' ).listen();
+            gui.add( U.attractionDistance , 'value' , 0 , 3 ).name( 'Attraction Distance' ).listen();
+            gui.add( U.attractionPower , 'value' , .005 , .1 ).name( 'Attraction Power' ).listen();
+            gui.add( U.dampening, 'value' , .8 , 1 ).name( 'Dampening' ).listen();
+
+
+            gui.add( U , 'reset' );
 
 
             var audioController = new AudioController();
-            var userAudio = new UserAudio( audioController );
+            /*var userAudio = new UserAudio( audioController );
 
             audioController.mute.gain.value = 0;
             userAudio.onStreamCreated = function(){
               onLoad();
-            }
+            }*/
+
+            var stream = new Stream( 'wool.mp3' , audioController );
 
             var shaders = new ShaderLoader('shaders');
 
@@ -218,13 +295,17 @@
 
 				stats = new Stats();
 				stats.domElement.style.position = 'absolute';
-				stats.domElement.style.top = '0px';
+				stats.domElement.style.right = '0px';
+                stats.domElement.style.bottom = '0px';
+                stats.domElement.id="stats";
 				container.appendChild( stats.domElement );
 
 				onWindowResize();
 
 				window.addEventListener( 'resize', onWindowResize, false );
 				window.addEventListener( 'mousemove', onMouseMove, false );
+				window.addEventListener( 'keydown', onKeyDown, false );
+				window.addEventListener( 'keyup', onKeyUp, false );
 
                 controller.connect();
 
@@ -246,8 +327,71 @@
 			//	uniforms.mouse.value.y = event.clientY;
 
 
-			}
+          }
 
+          function onKeyDown( event ) {
+
+            console.log(event.keyCode );
+
+            if( event.keyCode === 88 ){
+
+              toggleView();
+
+            }
+            if( event.keyCode === 32 ){
+              settingParams = true;
+            }
+			//	uniforms.mouse.value.x = event.clientX;
+			//	uniforms.mouse.value.y = event.clientY;
+
+          }
+
+
+
+          function onKeyUp( event ) {
+
+            if( event.keyCode === 32 ){
+              settingParams = false;
+            }
+			//	uniforms.mouse.value.x = event.clientX;
+			//	uniforms.mouse.value.y = event.clientY;
+
+
+		  }
+
+
+
+          function toggleView(){
+
+            var v = document.getElementById('gui');
+            var d = v.style.display;
+            if( d !== 'none' ){
+              v.style.display = 'none';
+            }else{
+              v.style.display = 'block';
+            }
+
+            
+            var v = document.getElementById('stats');
+            var d = v.style.display;
+            if( d !== 'none' ){
+              v.style.display = 'none';
+            }else{
+              v.style.display = 'block';
+            }
+
+            var v = document.getElementById('description');
+            var d = v.style.display;
+            if( d !== 'none' ){
+              v.style.display = 'none';
+            }else{
+              v.style.display = 'block';
+            }
+
+
+
+
+          }
 
 
 			//
@@ -310,85 +454,57 @@
 
               }
 
-              if( frame.hands[0] ){
-
-                var pos = frame.hands[0].palmPosition;
-                var center = frame.interactionBox.normalizePoint( pos );
-                attractionPoint.x = center[0] * 4;
-                attractionPoint.y = center[1] * 4;
-                attractionPoint.z = center[2] * 1;
-                /*for( var i = 0; i < frame.fingers.length; i++ ){
-
-                  var finger = frame.fingers[i];
-                  for( var j = 0; j < finger.bones.length; j++ ){
-
-                    var pos = finger.bones[j].prevJoint;
-
-                    var nP = frame.interactionBox.normalizePoint( pos );
-
-                    var index = i * (finger.bones.length+1) + j;
-
-                    spheres.value[ index ].x = nP[0]*2;
-                    spheres.value[ index ].y = nP[1]*2;
-                    spheres.value[ index ].z = (nP[2]*2) - 1;
-                    spheres.value[index].w = .1;
-
-                    if( j == 3 ){
-
-                      var pos = finger.bones[j].nextJoint;
-
-                      var nP = frame.interactionBox.normalizePoint( pos );
-
-                      var index = i * (finger.bones.length+1) + j+1;
-
-                      spheres.value[ index ].x = nP[0]*2;
-                      spheres.value[ index ].y = nP[1]*2;
-                      spheres.value[ index ].z = (nP[2]*2)-1;
-
-                    }
-
-
-                  }
-
-                }*/
-
-
-              }else{
-
-
-               var t = time.value;
+                var t = time.value;
 
 
               var z = Math.cos( (t * Math.sin( 4+.33)) * .2  );
               var y = Math.cos( (t * Math.sin( 4*3+4.33)) * .2  );
               var x = Math.sin( (t * Math.cos( 4+.33)) * .4  );
 
-              attractionPoint.set( x , y , z );
-
-               /* for( var i = 0; i < spheres.value.length; i++ ){
-
-                  var l = spheres.length;
-                  var t = time.value;
-
-                  //var x = Math.sin( t * (i+1) ) * Math.cos( t * ( l - i +1))*2;
-                  
-                  //var y = Math.cos( t * (i+1) ) * Math.cos( t * ( l - i +4))*2;
-                  var z = Math.cos( (t * Math.sin( i+.33)) * .2  );
-                  var y = Math.cos( (t * Math.sin( i*3+4.33)) * .2  );
-                  var x = Math.sin( (t * Math.cos( i+.33)) * .4  );
-
-                  //spheres.value[i].x = x;
-                  //spheres.value[i].y = y;
-                  //spheres.value[i].z = z;
-
-                  spheres.value[i].x = x* .5;//((i / spheres.value.length) - .5)*3;
-                  spheres.value[i].y = y*.5;
-                  spheres.value[i].z = z*.5;
+              attractionPoint.set( 0 , 0 , 0 );
 
 
-                }*/
+              if( frame.hands[0] && settingParams === true ){
+
+                var pos = frame.hands[0].palmPosition;
+                var center = frame.interactionBox.normalizePoint( pos );
+                var rot = frame.hands[0].palmNormal;
+                var arm = frame.interactionBox.normalizePoint( frame.hands[0].arm.prevJoint );
+
+                var armN = frame.interactionBox.normalizePoint( frame.hands[0].arm.nextJoint );
+
+                arm[0] -= armN[0];
+                arm[1] -= armN[1];
+                arm[2] -= armN[2];
+                center[0] -= .5;
+                center[1] -= .5;
+                center[2] -= .5;
+                //attractionPoint.x = center[0] * 4;
+                //attractionPoint.y = center[1] * 4;
+                //attractionPoint.z = center[2] * 1;
+
+
+                console.log( frame.hands[0] );
+                //console.log( rot );
+                U.radiusMultiplier.value  = Math.abs( center[0] * 4   );
+                U.springDistance.value    = Math.abs( center[1] * 4   );
+                U.springPower.value       = Math.abs( center[2] /1500 );
+
+                U.baseAmount.value = Math.abs( rot[0] * (2 ) );
+                U.aoAmount.value = 0 + Math.abs( rot[1] * (2 ) );
+                U.radiusBase.value = 0 + Math.abs( rot[2] *.10  );
+
+
+                U.baseAmount.value = Math.abs( rot[0] * (2 ) );
+                U.aoAmount.value = 0 + Math.abs( rot[1] * (2 ) );
+                U.radiusBase.value = 0 + Math.abs( rot[2] *.10  );
+
+                U.attractionDistance.value = 3. *  Math.abs(Math.sin( arm[0] * 5.));
+                U.attractionPower.value =   .1 *Math.abs(Math.sin(  arm[1] ));
+                //U.dampening.value =           Math.abs(Math.sin(  arm[2] ));
 
               }
+
 
               stats.update();
 

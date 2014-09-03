@@ -1,4 +1,7 @@
- uniform float time;
+const float numberOfIterations = 3.; 
+ 
+
+uniform float time;
 uniform vec2 mouse;
 uniform vec2 resolution;
 uniform sampler2D texture;
@@ -15,8 +18,6 @@ uniform vec3 spheres[25];
 uniform vec3 sphereCols[25];
 
 varying vec2 vUv;
-
-
 
 
 vec2 hash2( float n ){
@@ -263,9 +264,9 @@ void main( void ){
     //off = length(hash2( vUv.x + vUv.y )) ;
 
     //off = 0.;
-    for( int i = 0; i < 5; i++ ){
+    for( float i = 0.; i <numberOfIterations; i+=1. ){
 
-      vec2  aa = hash2( off +  float(i)*203.1 );
+      vec2  aa = hash2( off +  i *203.1 );
       float ra = sqrt(aa.y);
       float rx = ra*cos(6.2831*aa.x); 
       float ry = ra*sin(6.2831*aa.x);
@@ -281,17 +282,15 @@ void main( void ){
 
         occCol += sphereCols[j] * ( 1. - t );
 
-        //occCol = + 
-
       }
 
       occ += res;
 
     }
 
-    occ /= 5.; //occ * occ;
+    occ /= numberOfIterations; //occ * occ;
 
-    occCol /= 5.;
+    occCol /= numberOfIterations;
     // occ /= 5.;
     //occ = .0;
 
